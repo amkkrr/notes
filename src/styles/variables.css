@@ -1,0 +1,14 @@
+:root {
+    --primary-color: #4caf50;
+    --secondary-color: #ffffff;
+    --background-color: #f4f4f9;
+    --text-color: #333;
+    --header-height: 60px;
+}
+
+:root.dark-mode {
+    --primary-color: #388e3c;
+    --secondary-color: #121212;
+    --background-color: #333333;
+    --text-color: #f4f4f9;
+}
