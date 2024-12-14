@@ -101,6 +101,7 @@ function toggleInlineConfirmation(noteId, deleteButton, noteInput) {
         confirmationBox.remove();
     };
 }
+
 function initializeEditor() {
     const noteInput = document.getElementById('note-input');
     const saveButton = document.getElementById('save-note');
@@ -109,6 +110,13 @@ function initializeEditor() {
     deleteButton.textContent = '删除笔记';
     deleteButton.style.display = 'none';
     saveButton.parentNode.insertBefore(deleteButton, saveButton.nextSibling);
+
+    const newNoteButton = document.getElementById('new-note');
+    newNoteButton.addEventListener('click', () => {
+        noteInput.value = '';
+        deleteButton.style.display = 'none';
+        showFeedbackMessage('已创建新笔记！');
+    });
 
     saveButton.addEventListener('click', async () => {
         const noteContent = noteInput.value.trim();
@@ -136,7 +144,6 @@ function initializeEditor() {
             showFeedbackMessage('保存笔记失败，请稍后重试。', true);
         }
     });
-
 }
 
 function initializeSettingsDrawer() {
@@ -166,4 +173,7 @@ async function initializeApp() {
     renderNotes();
 }
 
-document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+    document.getElementById('new-note').click();
+});
