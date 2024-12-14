@@ -41,15 +41,26 @@ function loadNoteForEditing(noteId) {
 
         const deleteButton = document.getElementById('delete-note');
         deleteButton.style.display = 'block';
+
         deleteButton.onclick = async () => {
-            if (confirm('确定要删除这条笔记吗？')) {
+            const noteContent = noteInput.value.trim();
+            if (!noteContent) {
+                showFeedbackMessage('未选择任何笔记！', true);
+                return;
+            }
+
+            try {
                 await deleteNote(noteId);
-                alert('笔记已删除');
                 noteInput.value = '';
                 deleteButton.style.display = 'none';
+                showFeedbackMessage('笔记已删除！');
                 renderNotes();
+            } catch (error) {
+                console.error('删除笔记失败:', error);
+                showFeedbackMessage('删除笔记失败，请稍后重试。', true);
             }
         };
+
 
         console.log(`正在编辑笔记: ${note.title}`);
     }).catch((error) => {
@@ -69,7 +80,7 @@ function initializeEditor() {
     saveButton.addEventListener('click', async () => {
         const noteContent = noteInput.value.trim();
         if (!noteContent) {
-            alert('请输入笔记内容！');
+            showFeedbackMessage('请输入笔记内容！', true);
             return;
         }
 
@@ -85,13 +96,14 @@ function initializeEditor() {
             await saveNote(newNote);
             noteInput.value = '';
             deleteButton.style.display = 'none';
-            alert('笔记已保存！');
+            showFeedbackMessage('笔记已保存！');
             renderNotes();
         } catch (error) {
             console.error('保存笔记失败:', error);
-            alert('保存笔记失败，请稍后重试。');
+            showFeedbackMessage('保存笔记失败，请稍后重试。', true);
         }
     });
+
 }
 
 function initializeSettingsDrawer() {
@@ -101,6 +113,17 @@ function initializeSettingsDrawer() {
     settingsButton.addEventListener('click', () => {
         settingsDrawer.classList.toggle('visible');
     });
+}
+
+function showFeedbackMessage(message, isError = false) {
+    const feedbackContainer = document.getElementById('note-feedback');
+    feedbackContainer.textContent = message;
+    feedbackContainer.style.color = isError ? 'red' : 'green';
+
+    // 3秒后自动清除提示信息
+    setTimeout(() => {
+        feedbackContainer.textContent = '';
+    }, 3000);
 }
 
 async function initializeApp() {

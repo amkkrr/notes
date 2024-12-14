@@ -56,3 +56,9 @@ button {
 body {
     font-family: 'ConsolasFont', 'ChineseFont', sans-serif; /* 优先使用英文字体和中文字体 */
 }
+
+.feedback-message {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: green; /* 默认提示颜色 */
+}
