@@ -33,17 +33,18 @@ export const saveNote = async (note) => {
     }
 };
 
-// 获取所有笔记
+// 获取所有笔记，并按最后修改时间降序排序
 export const getAllNotes = async () => {
     try {
-        const notes = await db.notes.filter(note => note.deleted !== true).toArray();
-        return notes;
+        const notes = await db.notes
+            .filter(note => note.deleted !== true)
+            .sortBy('lastModified');
+        return notes.reverse(); // 按最后修改时间降序排列
     } catch (error) {
         console.error('获取笔记失败:', error);
         throw error;
     }
 };
-
 
 // 删除笔记 (软删除)
 export const deleteNote = async (id) => {

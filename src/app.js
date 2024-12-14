@@ -9,15 +9,25 @@ function renderNotes() {
             noteListContainer.innerHTML = '<p>没有可显示的笔记。</p>';
             return;
         }
-
+        
         notes.forEach((note) => {
             const noteCard = document.createElement('div');
             noteCard.className = 'note-card';
             noteCard.dataset.id = note.id;
+            // 格式化时间为24小时制精确到秒
+            const formattedDate = new Date(note.lastModified).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false // 使用24小时制
+            });
             noteCard.innerHTML = `
                 <h3>${note.title || '无标题'}</h3>
                 <p>${note.content.substring(0, 100) || '无内容'}...</p>
-                <span class="note-date">${new Date(note.lastModified).toLocaleDateString()}</span>
+                <span class="note-date">${formattedDate}</span>
             `;
             noteCard.addEventListener('click', () => loadNoteForEditing(note.id));
             noteListContainer.appendChild(noteCard);
