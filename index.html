@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笔记应用</title>
+    <link rel="stylesheet" href="./src/styles/common.css">
+    <link rel="stylesheet" href="./src/styles/variables.css">
+    <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部导航栏 -->
+        <header class="app-header">
+            <h1>笔记应用</h1>
+            <button id="settings-btn" class="nav-btn">设置</button>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="app-main">
+            <div class="editor-container">
+                <textarea class="editor-input" id="note-input" placeholder="输入您的笔记内容..."></textarea>
+                <button id="save-note" class="save-btn">保存笔记</button>
+            </div>
+            <div class="note-list">
+                <!-- 笔记将动态加载 -->
+            </div>
+        </main>
+
+        <!-- 设置抽屉 -->
+        <div id="settings-drawer" class="settings-drawer hidden">
+            <div class="settings-container">
+                <h2>设置</h2>
+                <label for="theme-select">选择主题:</label>
+                <select id="theme-select">
+                    <option value="light">浅色</option>
+                    <option value="dark">深色</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./src/app.js"></script>
+</body>
+</html>
