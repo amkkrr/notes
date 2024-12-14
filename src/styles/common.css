@@ -62,3 +62,54 @@ body {
     font-size: 0.9rem;
     color: green; /* 默认提示颜色 */
 }
+
+
+.inline-confirmation {
+    position: fixed;
+    background-color: var(--background-color);
+    border: 1px solid var(--text-color);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    text-align: center;
+    width: 300px; /* 固定宽度以便于居中 */
+    top: 50%; /* 垂直居中 */
+    left: 50%; /* 水平居中 */
+    transform: translate(-50%, -50%); /* 偏移到正中心 */
+    font-size: 1rem;
+}
+
+
+.inline-confirmation p {
+    margin: 0;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.confirm-btn, .cancel-btn {
+    padding: 0.3rem 0.8rem;
+    margin: 0 0.3rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.confirm-btn {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+}
+
+.cancel-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #388e3c;
+}
+
+.cancel-btn:hover {
+    background-color: #d32f2f;
+}

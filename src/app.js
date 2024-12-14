@@ -42,32 +42,55 @@ function loadNoteForEditing(noteId) {
         const deleteButton = document.getElementById('delete-note');
         deleteButton.style.display = 'block';
 
-        deleteButton.onclick = async () => {
-            const noteContent = noteInput.value.trim();
-            if (!noteContent) {
-                showFeedbackMessage('未选择任何笔记！', true);
-                return;
-            }
-
-            try {
-                await deleteNote(noteId);
-                noteInput.value = '';
-                deleteButton.style.display = 'none';
-                showFeedbackMessage('笔记已删除！');
-                renderNotes();
-            } catch (error) {
-                console.error('删除笔记失败:', error);
-                showFeedbackMessage('删除笔记失败，请稍后重试。', true);
-            }
+        deleteButton.onclick = () => {
+            toggleInlineConfirmation(noteId, deleteButton, noteInput);
         };
-
 
         console.log(`正在编辑笔记: ${note.title}`);
     }).catch((error) => {
         console.error('加载笔记失败:', error);
     });
 }
+function toggleInlineConfirmation(noteId, deleteButton, noteInput) {
+    // 如果确认框已存在，则移除
+    const existingConfirmation = document.querySelector('.inline-confirmation');
+    if (existingConfirmation) {
+        existingConfirmation.remove();
+        return;
+    }
 
+    // 创建确认框
+    const confirmationBox = document.createElement('div');
+    confirmationBox.className = 'inline-confirmation';
+    confirmationBox.innerHTML = `
+        <p>确认删除？</p>
+        <button id="confirm-delete" class="confirm-btn">确认</button>
+        <button id="cancel-delete" class="cancel-btn">取消</button>
+    `;
+
+    // 将确认框插入到删除按钮后面
+    deleteButton.parentNode.insertBefore(confirmationBox, deleteButton.nextSibling);
+
+    // 绑定事件
+    document.getElementById('confirm-delete').onclick = async () => {
+        try {
+            await deleteNote(noteId);
+            noteInput.value = '';
+            deleteButton.style.display = 'none';
+            confirmationBox.remove();
+            showFeedbackMessage('笔记已删除！');
+            renderNotes();
+        } catch (error) {
+            console.error('删除笔记失败:', error);
+            showFeedbackMessage('删除笔记失败，请稍后重试。', true);
+            confirmationBox.remove();
+        }
+    };
+
+    document.getElementById('cancel-delete').onclick = () => {
+        confirmationBox.remove();
+    };
+}
 function initializeEditor() {
     const noteInput = document.getElementById('note-input');
     const saveButton = document.getElementById('save-note');
