@@ -4,26 +4,70 @@
 
 本项目是一个基于 Web 技术开发的笔记应用，使用 Dexie.js 作为本地数据库，并通过 PWA + TWA 技术封装为安卓原生应用。
 
+## 项目架构
+
+### 架构设计原则
+
+本项目采用低耦合架构设计，主要体现在以下几个方面：
+
+1. 模块化设计
+   - 每个功能模块独立封装
+   - 模块之间通过接口通信
+   - 避免直接依赖，使用依赖注入
+   - 各模块可独立测试和部署
+
+2. 数据流设计
+   - 采用单向数据流
+   - 状态管理与UI完全分离
+   - 通过发布订阅模式实现模块间通信
+   - 避免模块间直接数据传递
+
+3. 接口设计
+   - 定义清晰的模块接口
+   - 隐藏内部实现细节
+   - 提供统一的错误处理机制
+   - 版本化接口设计
+
+4. 存储设计
+   - 数据访问层统一封装
+   - 业务逻辑与数据操作分离
+   - 提供抽象的存储接口
+   - 支持多种存储方式切换
+
+### 目录结构
+```
+notes-app/
+├── src/
+│   ├── assets/          # 静态资源
+│   ├── components/      # 通用组件
+│   │   ├── Editor/      # 编辑器组件
+│   │   ├── NoteList/    # 笔记列表组件
+│   │   └── Category/    # 分类管理组件
+│   ├── pages/          # 页面组件
+│   ├── services/       # 服务层
+│   │   ├── db.js       # 数据库服务
+│   │   ├── sync.js     # 同步服务
+│   │   └── export.js   # 导出服务
+│   ├── utils/          # 工具函数
+│   ├── styles/         # 样式文件
+│   └── app.js         # 应用入口
+├── public/
+│   ├── index.html
+│   ├── manifest.json
+│   └── service-worker.js
+├── scripts/           # 构建脚本
+└── docs/             # 项目文档
+```
+
 ## 技术栈
 
 - 前端框架：HTML5 + CSS3 + JavaScript
 - 数据库：Dexie.js (IndexedDB 封装)
 - 打包方案：PWA + TWA
 - 开发工具：VS Code、Android Studio
-- 目标平台：Android
+- 目标平台：Web App
 
 ## 数据库设计
-
-### 数据库初始化
-
-```javascript
-const db = new Dexie('NotesApp');
-
-db.version(1).stores({
-    notes: '++id, title, content, created, modified, categoryId, *tags, isFavorite, isArchived',
-    categories: '++id, name, color'
-});
-```
 
 ### 数据表结构
 
@@ -43,272 +87,88 @@ db.version(1).stores({
 - name: 分类名称
 - color: 分类颜色
 
-### 核心数据操作 API
+## 功能模块
 
-```javascript
-// 添加笔记
-async function addNote(noteData) {
-    return await db.notes.add({
-        title: noteData.title,
-        content: noteData.content,
-        created: new Date(),
-        modified: new Date(),
-        categoryId: noteData.categoryId,
-        tags: noteData.tags || [],
-        isFavorite: false,
-        isArchived: false
-    });
-}
+### 主要功能
+1. 笔记编辑器
+   - 基于 Prosemirror 的富文本编辑
+   - 实时保存
+   - 支持多种格式
 
-// 更新笔记
-async function updateNote(id, noteData) {
-    await db.notes.update(id, {
-        ...noteData,
-        modified: new Date()
-    });
-}
+2. 搜索功能
+   - 基于索引的全文搜索
+   - 关键词分词处理
+   - 实时搜索结果
 
-// 删除笔记
-async function deleteNote(id) {
-    await db.notes.delete(id);
-}
+3. 数据导入导出
+   - JSON 格式导出
+   - 版本兼容处理
+   - 批量导入功能
 
-// 按分类获取笔记
-async function getNotesByCategory(categoryId) {
-    return await db.notes
-        .where('categoryId')
-        .equals(categoryId)
-        .toArray();
-}
-```
+4. 多设备同步
+   - 基于时间戳的同步策略
+   - 冲突处理
+   - 离线支持
 
-## PWA 配置
+## 错误处理
 
-### manifest.json 配置
+### 错误类型
+1. 数据库错误（DatabaseError）
+2. 同步错误（SyncError）
+3. 验证错误（ValidationError）
 
-```json
-{
-    "name": "笔记应用",
-    "short_name": "笔记",
-    "description": "一个简单的笔记应用",
-    "start_url": "/index.html",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#2196f3",
-    "icons": [
-        {
-            "src": "icons/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "icons/icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
-    ]
-}
-```
-
-### Service Worker 配置
-
-```javascript
-// service-worker.js
-const CACHE_NAME = 'notes-app-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json'
-];
-
-// 安装 Service Worker
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
-    );
-});
-
-// 激活 Service Worker
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.filter(cacheName => {
-                    return cacheName !== CACHE_NAME;
-                }).map(cacheName => {
-                    return caches.delete(cacheName);
-                })
-            );
-        })
-    );
-});
-
-// 处理离线缓存
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request);
-            })
-    );
-});
-```
-
-## TWA 配置
-
-### Android 项目配置
-
-1. 在 Android Studio 中创建新项目，选择 "TWA" 模板
-
-2. 修改 build.gradle
-
-```gradle
-dependencies {
-    implementation 'com.google.androidbrowser:customtabs:2.0.0'
-    implementation 'androidx.browser:browser:1.4.0'
-}
-```
-
-3. 配置 Digital Asset Links
-
-```json
-// .well-known/assetlinks.json
-[{
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-        "namespace": "android_app",
-        "package_name": "com.example.notes",
-        "sha256_cert_fingerprints": [
-            "YOUR:APP:FINGERPRINT"
-        ]
-    }
-}]
-```
-
-### 清单文件配置
-
-```xml
-<!-- AndroidManifest.xml -->
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.notes">
-
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/Theme.AppCompat.NoActionBar">
-
-        <meta-data
-            android:name="asset_statements"
-            android:resource="@string/asset_statements" />
-
-        <activity
-            android:name="android.support.customtabs.trusted.LauncherActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-```
-
-## 部署步骤
-
-1. 前端打包
-```bash
-# 构建前端资源
-npm run build
-
-# 生成 Service Worker
-workbox generateSW workbox-config.js
-```
-
-2. PWA 验证
-- 使用 Lighthouse 检查 PWA 评分
-- 测试离线功能
-- 验证安装横幅
-
-3. TWA 打包
-```bash
-# 在 Android Studio 中
-# 1. 生成签名密钥
-# 2. 配置 build.gradle
-# 3. 执行打包
-./gradlew assembleRelease
-```
-
-## 调试指南
-
-1. 前端调试
-- 使用 Chrome DevTools 的 Application 面板调试 IndexedDB
-- 使用 Network 面板检查资源加载
-- 使用 Console 面板查看日志
-
-2. PWA 调试
-- 使用 Lighthouse 检查 PWA 相关问题
-- 使用 Chrome DevTools 的 Application 面板调试 Service Worker
-
-3. TWA 调试
-- 使用 Chrome 远程调试
-- 使用 Android Studio 的日志工具
-- 使用 adb logcat 查看系统日志
-
-## 注意事项
-
-1. 数据库
-- 定期备份数据
-- 处理并发访问
-- 注意数据迁移
-
-2. PWA
-- 确保 HTTPS 配置
-- 处理离线状态
-- 注意缓存策略
-
-3. TWA
-- 验证数字资产链接
-- 处理深层链接
-- 注意应用签名
+### 错误处理策略
+- 错误日志记录
+- 用户友好提示
+- 自动重试机制
 
 ## 性能优化
 
-1. 资源优化
+### 资源优化
 - 使用 WebP 图片格式
 - 启用 GZIP 压缩
 - 实现资源预加载
 
-2. 数据库优化
+### 数据库优化
 - 使用适当的索引
 - 批量操作优化
 - 大文本分片存储
 
-3. 离线优化
+### 离线优化
 - 实现渐进式加载
 - 优化缓存策略
 - 预缓存关键资源
 
 ## 开发规范
 
-1. 代码规范
+### 代码规范
 - 使用 ESLint 进行代码检查
 - 遵循 Git 提交规范
 - 编写单元测试
 
-2. 文档规范
+### 文档规范
 - 及时更新 API 文档
 - 编写代码注释
 - 记录重要决策
 
-3. 版本控制
+### 版本控制
 - 遵循语义化版本
 - 维护更新日志
 - 做好分支管理
+
+## 注意事项
+
+### 数据库相关
+- 定期备份数据
+- 处理并发访问
+- 注意数据迁移
+
+### PWA 相关
+- 确保 HTTPS 配置
+- 处理离线状态
+- 注意缓存策略
+
+### TWA 相关
+- 验证数字资产链接
+- 处理深层链接
+- 注意应用签名
