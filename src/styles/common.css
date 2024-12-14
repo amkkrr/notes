@@ -11,6 +11,13 @@ body {
     line-height: 1.6;
 }
 
+.editor-input,
+.editor-preview {
+    font-family: inherit; /* 使用全局字体 */
+    font-size: 0.9rem; /* 确保字体大小一致 */
+    line-height: 1.6; /* 保持良好的阅读体验 */
+}
+
 h1, h2, h3 {
     margin-bottom: 1rem;
 }
@@ -30,4 +37,22 @@ button {
 }
 .save-btn:hover {
     background-color: #388e3c;
+}
+/* 英文字体：Consolas，应用于 ASCII 字符 */
+@font-face {
+    font-family: 'ConsolasFont'; /* 自定义字体名 */
+    src: local('Consolas'), local('Courier New'); /* 本地字体回退到 Courier New */
+    unicode-range: U+0020-007F; /* 仅应用于基本拉丁字符（英文字母、数字和符号） */
+}
+
+/* 中文字体：Microsoft YaHei，应用于中文字符 */
+@font-face {
+    font-family: 'ChineseFont'; /* 自定义字体名 */
+    src: local('Microsoft YaHei'), local('SimSun'); /* 本地字体回退到 SimSun */
+    unicode-range: U+4E00-9FFF; /* 应用于中文字符范围 */
+}
+
+/* 全局设置字体优先级 */
+body {
+    font-family: 'ConsolasFont', 'ChineseFont', sans-serif; /* 优先使用英文字体和中文字体 */
 }
