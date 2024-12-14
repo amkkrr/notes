@@ -1,56 +1,97 @@
-import { initializeDB, saveNote } from './modules/storage/services/db.js';
-import { renderNotes } from './pages/home.js';
+import { initializeDB, saveNote, getAllNotes, deleteNote } from './modules/storage/services/db.js';
+
+function renderNotes() {
+    const noteListContainer = document.querySelector('.note-list');
+    noteListContainer.innerHTML = ''; // 清空现有内容
+
+    getAllNotes().then((notes) => {
+        if (notes.length === 0) {
+            noteListContainer.innerHTML = '<p>没有可显示的笔记。</p>';
+            return;
+        }
+
+        notes.forEach((note) => {
+            const noteCard = document.createElement('div');
+            noteCard.className = 'note-card';
+            noteCard.dataset.id = note.id;
+            noteCard.innerHTML = `
+                <h3>${note.title || '无标题'}</h3>
+                <p>${note.content.substring(0, 100) || '无内容'}...</p>
+                <span class="note-date">${new Date(note.lastModified).toLocaleDateString()}</span>
+            `;
+            noteCard.addEventListener('click', () => loadNoteForEditing(note.id));
+            noteListContainer.appendChild(noteCard);
+        });
+    }).catch((error) => {
+        console.error('获取笔记失败:', error);
+        noteListContainer.innerHTML = '<p>加载笔记时出错。</p>';
+    });
+}
+
+function loadNoteForEditing(noteId) {
+    getAllNotes().then((notes) => {
+        const note = notes.find(n => n.id === noteId);
+        if (!note) {
+            alert('笔记未找到');
+            return;
+        }
+
+        const noteInput = document.getElementById('note-input');
+        noteInput.value = note.content;
+
+        const deleteButton = document.getElementById('delete-note');
+        deleteButton.style.display = 'block';
+        deleteButton.onclick = async () => {
+            if (confirm('确定要删除这条笔记吗？')) {
+                await deleteNote(noteId);
+                alert('笔记已删除');
+                noteInput.value = '';
+                deleteButton.style.display = 'none';
+                renderNotes();
+            }
+        };
+
+        console.log(`正在编辑笔记: ${note.title}`);
+    }).catch((error) => {
+        console.error('加载笔记失败:', error);
+    });
+}
 
 function initializeEditor() {
     const noteInput = document.getElementById('note-input');
     const saveButton = document.getElementById('save-note');
-    const saveStatus = document.createElement('p');
-    saveStatus.id = 'save-status';
-    saveStatus.style.color = 'green';
-    saveStatus.style.marginTop = '10px';
-    saveButton.parentNode.insertBefore(saveStatus, saveButton.nextSibling);
+    const deleteButton = document.createElement('button');
+    deleteButton.id = 'delete-note';
+    deleteButton.textContent = '删除笔记';
+    deleteButton.style.display = 'none';
+    saveButton.parentNode.insertBefore(deleteButton, saveButton.nextSibling);
 
-saveButton.addEventListener('click', async () => {
-    console.log('保存按钮点击事件触发'); // 调试日志
-    const noteContent = noteInput.value.trim();
-    if (!noteContent) {
-        alert('请输入笔记内容！');
-        return;
-    }
+    saveButton.addEventListener('click', async () => {
+        const noteContent = noteInput.value.trim();
+        if (!noteContent) {
+            alert('请输入笔记内容！');
+            return;
+        }
 
-    try {
-        console.log('开始保存笔记'); // 调试日志
-        const newNote = {
-            title: noteContent.substring(0, 20) || noteContent,
-            content: noteContent,
-            created: Date.now(),
-            lastModified: Date.now(),
-            isFavorite: false,
-            deleted: false,
-        };
-        const noteId = await saveNote(newNote);
-        console.log('笔记保存成功，ID:', noteId); // 调试日志
-        noteInput.value = '';
-        saveStatus.textContent = '笔记已保存！';
-        setTimeout(() => saveStatus.textContent = '', 3000);
-
-        const noteListContainer = document.querySelector('.note-list');
-        const newNoteCard = document.createElement('div');
-        newNoteCard.className = 'note-card';
-        newNoteCard.innerHTML = `
-            <h3>${newNote.title || '无标题'}</h3>
-            <p>${newNote.content.substring(0, 100) || '无内容'}...</p>
-            <span class="note-date">${new Date(newNote.lastModified).toLocaleDateString()}</span>
-        `;
-        noteListContainer.prepend(newNoteCard);
-    } catch (error) {
-        console.error('保存笔记失败:', error);
-        saveStatus.style.color = 'red';
-        saveStatus.textContent = '保存笔记失败，请稍后重试。';
-        setTimeout(() => saveStatus.textContent = '', 5000);
-    }
-});
-
+        try {
+            const newNote = {
+                title: noteContent.substring(0, 20) || noteContent,
+                content: noteContent,
+                created: Date.now(),
+                lastModified: Date.now(),
+                isFavorite: false,
+                deleted: false,
+            };
+            await saveNote(newNote);
+            noteInput.value = '';
+            deleteButton.style.display = 'none';
+            alert('笔记已保存！');
+            renderNotes();
+        } catch (error) {
+            console.error('保存笔记失败:', error);
+            alert('保存笔记失败，请稍后重试。');
+        }
+    });
 }
 
 function initializeSettingsDrawer() {
@@ -66,7 +107,7 @@ async function initializeApp() {
     await initializeDB();
     initializeEditor();
     initializeSettingsDrawer();
-    await renderNotes();
+    renderNotes();
 }
 
 document.addEventListener('DOMContentLoaded', initializeApp);
