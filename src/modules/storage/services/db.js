@@ -57,7 +57,28 @@ export const deleteNote = async (id) => {
     }
 };
 
-// 更新笔记
+// 保存或更新笔记
+export const upsertNote = async (note) => {
+    try {
+        if (note.id) {
+            // 如果存在 ID，调用更新逻辑
+            await updateNote(note.id, {
+                ...note,
+                lastModified: Date.now(),
+            });
+            console.log(`笔记已更新，ID: ${note.id}`);
+        } else {
+            // 如果不存在 ID，调用保存逻辑
+            const id = await saveNote(note);
+            console.log(`笔记已保存，ID: ${id}`);
+            return id;
+        }
+    } catch (error) {
+        console.error('保存或更新笔记失败:', error);
+        throw error;
+    }
+};
+
 export const updateNote = async (id, updates) => {
     try {
         await db.notes.update(id, updates);

@@ -1,4 +1,6 @@
-import { initializeDB, saveNote, getAllNotes, deleteNote } from './modules/storage/services/db.js';
+import { initializeDB, saveNote, getAllNotes, deleteNote, upsertNote } from './modules/storage/services/db.js';
+
+let currentEditingNoteId = null; // 全局变量，存储当前编辑的笔记 ID
 
 function renderNotes() {
     const noteListContainer = document.querySelector('.note-list');
@@ -49,6 +51,9 @@ function loadNoteForEditing(noteId) {
         const noteInput = document.getElementById('note-input');
         noteInput.value = note.content;
 
+        // 保存当前编辑的笔记 ID
+        currentEditingNoteId = note.id;
+
         const deleteButton = document.getElementById('delete-note');
         deleteButton.style.display = 'block';
 
@@ -61,6 +66,7 @@ function loadNoteForEditing(noteId) {
         console.error('加载笔记失败:', error);
     });
 }
+
 function toggleInlineConfirmation(noteId, deleteButton, noteInput) {
     // 如果确认框已存在，则移除
     const existingConfirmation = document.querySelector('.inline-confirmation');
@@ -115,6 +121,10 @@ function initializeEditor() {
     newNoteButton.addEventListener('click', () => {
         noteInput.value = '';
         deleteButton.style.display = 'none';
+
+        // 清除当前编辑的笔记 ID
+        currentEditingNoteId = null;
+
         showFeedbackMessage('已创建新笔记！');
     });
 
@@ -126,17 +136,20 @@ function initializeEditor() {
         }
 
         try {
-            const newNote = {
+            const noteData = {
+                id: currentEditingNoteId || undefined, // 如果有 ID，则传递；否则视为新建
                 title: noteContent.substring(0, 20) || noteContent,
                 content: noteContent,
-                created: Date.now(),
+                created: currentEditingNoteId ? undefined : Date.now(), // 仅新建时设置创建时间
                 lastModified: Date.now(),
                 isFavorite: false,
                 deleted: false,
             };
-            await saveNote(newNote);
+
+            await upsertNote(noteData); // 调用统一的保存或更新方法
             noteInput.value = '';
             deleteButton.style.display = 'none';
+            currentEditingNoteId = null; // 重置编辑状态
             showFeedbackMessage('笔记已保存！');
             renderNotes();
         } catch (error) {
